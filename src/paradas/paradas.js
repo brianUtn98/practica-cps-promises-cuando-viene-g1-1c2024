@@ -26,7 +26,9 @@ const paradas = {
 
 app.get('/paradas/:parada', (req, res) => {
     const parada = req.params.parada;
+    console.log(`Me pidieron parada ${parada}`);
     const detalleParada = paradas[parada];
+    console.log(detalleParada);
     if (detalleParada === undefined) {
         return res.sendStatus(404);
     } else {

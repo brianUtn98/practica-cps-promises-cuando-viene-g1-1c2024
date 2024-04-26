@@ -3,6 +3,8 @@ const http = require('http');
 const WebSocket = require('ws');
 const { get } = require('../request');
 const { SERVICIOS } = require('../config');
+const { inspect } = require('util');
+
 
 const MONITOREO = SERVICIOS.monitoreo;
 
@@ -24,6 +26,35 @@ wss.on('connection', (ws) => {
     ws.send(mensaje('¡Conectado al monitoreo de servicios!'));
 
     setInterval(() => {
+        Promise.all(Object.entries(SERVICIOS).filter(([nombre, _]) => nombre !== "monitoreo").map(([nombre, servicio]) => {
+            return new Promise((resolve, reject) => {
+                get(servicio, "/health", (err, data) => {
+                    if(err){
+                        console.log(`[${nombre}] error: ${err.message}`);
+                        resolve({
+                            servicio: servicio.nombre,
+                            status: "DOWN",
+                        });
+                    } else {
+                        console.log(`[${nombre}] status: ${inspect(data)}`);
+                        resolve({
+                            servicio: servicio.nombre, 
+                            status: data.status,
+                        });
+                    }
+                })
+            }).then((estado) => {
+               return estado;
+            })
+        })).then((estados) => {
+        console.log
+           ws.send(JSON.stringify({
+            type: "estados",
+            msg: {
+                estados
+            }
+           }))
+        })
         ws.send(mensaje('Hey'));
     }, 1000);
 
